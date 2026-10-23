@@ -89,6 +89,51 @@
   .status-dot.connected { background: var(--green); }
   .status-dot.connecting { background: var(--amber); }
 
+  /* --- Trainer-Status (was ist im Trainer bestätigt vs. lokal eingestellt) --- */
+  .trainer-status-panel {
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  .trainer-status-panel h2 {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--panel-border);
+    font-size: 1.1rem;
+  }
+  .status-row:first-of-type {
+    border-top: none;
+  }
+  .status-value {
+    font-weight: 700;
+  }
+  .status-value.ok { color: var(--green); }
+  .status-value.warn { color: var(--amber); }
+  .status-value.bad { color: var(--red); }
+  .status-value.unknown { color: var(--text-dim); }
+
+  .target-sync-note {
+    text-align: center;
+    font-size: 0.95rem;
+    min-height: 1.3em;
+    margin-top: -8px;
+    margin-bottom: 10px;
+  }
+  .target-sync-note.ok { color: var(--green); }
+  .target-sync-note.warn { color: var(--amber); }
+  .target-sync-note.bad { color: var(--red); }
+
   .no-bluetooth-warning {
     background: #3a1f1f;
     border: 2px solid var(--red);
@@ -253,6 +298,22 @@
     </div>
   </div>
 
+  <div class="trainer-status-panel">
+    <h2>Trainer-Status (bestätigt)</h2>
+    <div class="status-row">
+      <span>Steuerungs-Hoheit</span>
+      <span class="status-value unknown" id="statusControl">Unbekannt</span>
+    </div>
+    <div class="status-row">
+      <span>ERG-Modus</span>
+      <span class="status-value unknown" id="statusMode">Unbekannt</span>
+    </div>
+    <div class="status-row">
+      <span>Zielleistung im Trainer</span>
+      <span class="status-value unknown" id="statusTargetTrainer">--</span>
+    </div>
+  </div>
+
   <div class="readouts">
     <div class="readout">
       <div class="label">Leistung</div>
@@ -277,6 +338,7 @@
       <span class="value" id="targetValue">100</span>
       <span class="unit">W</span>
     </div>
+    <div class="target-sync-note" id="targetSyncNote"></div>
     <div class="target-buttons">
       <button id="minus10">-10</button>
       <button id="minus5">-5</button>
@@ -336,6 +398,10 @@
     cadenceValue: document.getElementById('cadenceValue'),
     speedValue: document.getElementById('speedValue'),
     targetValue: document.getElementById('targetValue'),
+    targetSyncNote: document.getElementById('targetSyncNote'),
+    statusControl: document.getElementById('statusControl'),
+    statusMode: document.getElementById('statusMode'),
+    statusTargetTrainer: document.getElementById('statusTargetTrainer'),
     minus10: document.getElementById('minus10'),
     minus5: document.getElementById('minus5'),
     plus5: document.getElementById('plus5'),
@@ -355,6 +421,15 @@
   let wakeLock = null;
   let targetPower = 100;
   let debounceTimer = null;
+
+  // Was der Trainer uns tatsächlich bestätigt hat (vs. was lokal nur
+  // eingestellt/angefragt ist). null = noch unbekannt, da seit dem
+  // letzten Verbindungsaufbau noch keine Antwort kam.
+  let controlGranted = null;   // true/false/null
+  let ergActive = null;        // true/false/null
+  let confirmedTargetPower = null; // zuletzt vom Trainer bestätigter Wert
+  let pendingSend = false;     // Set Target Power gerade unterwegs
+  let lastCommandFailed = false;
 
   // Control-Point-Befehle werden strikt nacheinander abgearbeitet:
   // erst wenn die Indication-Antwort auf den vorherigen Befehl da ist
@@ -418,6 +493,68 @@
       default:
         el.statusText.textContent = 'Nicht verbunden';
     }
+  }
+
+  // ---------------------------------------------------------------------
+  // Trainer-Status-Anzeige: was ist im Trainer bestätigt vs. nur lokal
+  // eingestellt/ausstehend?
+  // ---------------------------------------------------------------------
+  function setStatusValue(elem, text, cssClass) {
+    elem.textContent = text;
+    elem.className = 'status-value ' + cssClass;
+  }
+
+  function updateTrainerStatusUI() {
+    if (controlGranted === true) {
+      setStatusValue(el.statusControl, 'Erteilt', 'ok');
+    } else if (controlGranted === false) {
+      setStatusValue(el.statusControl, 'Fehlgeschlagen', 'bad');
+    } else {
+      setStatusValue(el.statusControl, 'Unbekannt', 'unknown');
+    }
+
+    if (ergActive === true) {
+      setStatusValue(el.statusMode, 'Gestartet', 'ok');
+    } else if (ergActive === false) {
+      setStatusValue(el.statusMode, 'Gestoppt', 'warn');
+    } else {
+      setStatusValue(el.statusMode, 'Unbekannt', 'unknown');
+    }
+
+    if (confirmedTargetPower === null) {
+      setStatusValue(el.statusTargetTrainer, '--', 'unknown');
+    } else {
+      const inSync = !pendingSend && !lastCommandFailed && confirmedTargetPower === targetPower;
+      setStatusValue(el.statusTargetTrainer, confirmedTargetPower + ' W', inSync ? 'ok' : 'warn');
+    }
+
+    // Hinweis direkt unter der großen Zielwert-Anzeige: zeigt sofort, ob
+    // der angezeigte Wert schon im Trainer hinterlegt ist oder nicht.
+    if (pendingSend) {
+      el.targetSyncNote.textContent = 'Wird an Trainer gesendet...';
+      el.targetSyncNote.className = 'target-sync-note warn';
+    } else if (lastCommandFailed) {
+      el.targetSyncNote.textContent = 'Fehler beim Senden - nicht im Trainer hinterlegt';
+      el.targetSyncNote.className = 'target-sync-note bad';
+    } else if (confirmedTargetPower === targetPower) {
+      el.targetSyncNote.textContent = 'Im Trainer hinterlegt';
+      el.targetSyncNote.className = 'target-sync-note ok';
+    } else if (confirmedTargetPower !== null) {
+      el.targetSyncNote.textContent = `Im Trainer noch ${confirmedTargetPower} W hinterlegt`;
+      el.targetSyncNote.className = 'target-sync-note warn';
+    } else {
+      el.targetSyncNote.textContent = 'Noch nicht an Trainer gesendet';
+      el.targetSyncNote.className = 'target-sync-note unknown';
+    }
+  }
+
+  function resetTrainerStatus() {
+    controlGranted = null;
+    ergActive = null;
+    confirmedTargetPower = null;
+    pendingSend = false;
+    lastCommandFailed = false;
+    updateTrainerStatusUI();
   }
 
   // ---------------------------------------------------------------------
@@ -617,6 +754,7 @@
   // ---------------------------------------------------------------------
   async function connectAndSetup(bleDevice) {
     setStatus('connecting');
+    resetTrainerStatus();
     server = await bleDevice.gatt.connect();
     logDebug('INFO', 'GATT-Server verbunden');
 
@@ -647,8 +785,25 @@
 
     // Steuerungshoheit anfordern, dann Training starten (laut FTMS-Ablauf
     // muss jeder Befehl erst mit Erfolg quittiert werden, bevor der nächste folgt)
-    await requestControl();
-    await startResume();
+    try {
+      await requestControl();
+      controlGranted = true;
+    } catch (err) {
+      controlGranted = false;
+      updateTrainerStatusUI();
+      throw err;
+    }
+    updateTrainerStatusUI();
+
+    try {
+      await startResume();
+      ergActive = true;
+    } catch (err) {
+      ergActive = false;
+      updateTrainerStatusUI();
+      throw err;
+    }
+    updateTrainerStatusUI();
   }
 
   function handleDisconnected() {
@@ -658,6 +813,7 @@
     commandQueue = [];
     queueBusy = false;
     setStatus('disconnected');
+    resetTrainerStatus();
   }
 
   async function onConnectClick() {
@@ -701,6 +857,7 @@
 
   function renderTarget() {
     el.targetValue.textContent = targetPower;
+    updateTrainerStatusUI();
   }
 
   function scheduleTargetSend() {
@@ -720,7 +877,21 @@
       logDebug('ERR', 'Zielleistung kann nicht gesendet werden: nicht verbunden');
       return;
     }
-    setTargetPowerOnTrainer(targetPower).catch(() => {});
+    const sentValue = targetPower;
+    pendingSend = true;
+    updateTrainerStatusUI();
+    setTargetPowerOnTrainer(sentValue)
+      .then(() => {
+        confirmedTargetPower = sentValue;
+        lastCommandFailed = false;
+      })
+      .catch(() => {
+        lastCommandFailed = true;
+      })
+      .finally(() => {
+        pendingSend = false;
+        updateTrainerStatusUI();
+      });
   }
 
   function adjustTarget(delta) {
@@ -743,7 +914,12 @@
   });
 
   el.stopBtn.addEventListener('click', () => {
-    stopPause().catch(() => {});
+    stopPause()
+      .then(() => {
+        ergActive = false;
+        updateTrainerStatusUI();
+      })
+      .catch(() => {});
   });
 
   // ---------------------------------------------------------------------
