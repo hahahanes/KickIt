@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Kickr Steuerung</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0d0f12;
+    --panel: #1a1d22;
+    --panel-border: #2c3038;
+    --text: #f2f4f7;
+    --text-dim: #9aa2ad;
+    --accent: #3ea6ff;
+    --accent-dim: #1d5a8a;
+    --green: #3ecf6e;
+    --red: #ff5c5c;
+    --amber: #ffb03e;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    padding: 16px;
+    padding-bottom: 40px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 12px 0;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  /* --- Verbindungsbereich --- */
+  .connection-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  button {
+    font-family: inherit;
+    border: none;
+    border-radius: 14px;
+    background: var(--panel);
+    color: var(--text);
+    border: 2px solid var(--panel-border);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  button:active {
+    transform: scale(0.97);
+  }
+  .btn-primary {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 600;
+    padding: 18px 28px;
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+  }
+  .status {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+  }
+  .status-dot.connected { background: var(--green); }
+  .status-dot.connecting { background: var(--amber); }
+
+  .no-bluetooth-warning {
+    background: #3a1f1f;
+    border: 2px solid var(--red);
+    color: #ffd6d6;
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+  }
+
+  /* --- Live-Anzeigen --- */
+  .readouts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .readout {
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 18px 10px;
+    text-align: center;
+  }
+  .readout .value {
+    font-size: 3.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout .unit {
+    font-size: 1rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+  .readout .label {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  /* --- ERG Steuerung --- */
+  .erg-panel {
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .erg-panel h2 {
+    margin: 0 0 14px 0;
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .target-display {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .target-display .value {
+    font-size: 5rem;
+    font-weight: 800;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .target-display .unit {
+    font-size: 1.3rem;
+    color: var(--text-dim);
+  }
+  .target-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .target-buttons button {
+    font-size: 1.6rem;
+    font-weight: 700;
+    padding: 22px 0;
+  }
+  .action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .action-buttons button {
+    font-size: 1.4rem;
+    font-weight: 700;
+    padding: 20px 0;
+  }
+  .btn-set {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-stop {
+    background: #3a1f1f;
+    border-color: var(--red);
+    color: #ffd6d6;
+  }
+
+  /* --- Debug Log --- */
+  details.debug {
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 10px 14px;
+  }
+  details.debug summary {
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text-dim);
+    padding: 6px 0;
+  }
+  #debugLog {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #000;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 8px;
+    color: #8fd98f;
+  }
+  .debug-controls {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .debug-controls button {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+  }
+
+  @media (max-width: 600px) {
+    .readout .value { font-size: 2.6rem; }
+    .target-display .value { font-size: 3.6rem; }
+  }
+</style>
+</head>
+<body>
+
+  <h1>Kickr Steuerung</h1>
+
+  <div id="noBluetoothWarning" class="no-bluetooth-warning" style="display:none;">
+    Web Bluetooth wird in diesem Browser nicht unterstützt. Bitte diese Seite in <strong>Bluefy</strong> öffnen.
+  </div>
+
+  <div class="connection-bar">
+    <button id="connectBtn" class="btn-primary">Mit Trainer verbinden</button>
+    <button id="reconnectBtn" class="btn-primary" style="display:none;">Erneut verbinden</button>
+    <div class="status">
+      <span id="statusDot" class="status-dot"></span>
+      <span id="statusText">Nicht verbunden</span>
+    </div>
+  </div>
+
+  <div class="readouts">
+    <div class="readout">
+      <div class="label">Leistung</div>
+      <div class="value" id="powerValue">--</div>
+      <div class="unit">Watt</div>
+    </div>
+    <div class="readout">
+      <div class="label">Kadenz</div>
+      <div class="value" id="cadenceValue">--</div>
+      <div class="unit">rpm</div>
+    </div>
+    <div class="readout">
+      <div class="label">Geschwindigkeit</div>
+      <div class="value" id="speedValue">--</div>
+      <div class="unit">km/h</div>
+    </div>
+  </div>
+
+  <div class="erg-panel">
+    <h2>ERG-Steuerung · Zielleistung</h2>
+    <div class="target-display">
+      <span class="value" id="targetValue">100</span>
+      <span class="unit">W</span>
+    </div>
+    <div class="target-buttons">
+      <button id="minus10">-10</button>
+      <button id="minus5">-5</button>
+      <button id="plus5">+5</button>
+      <button id="plus10">+10</button>
+    </div>
+    <div class="action-buttons">
+      <button id="setBtn" class="btn-set">Setzen</button>
+      <button id="stopBtn" class="btn-stop">Stop</button>
+    </div>
+  </div>
+
+  <details class="debug">
+    <summary>Debug-Log</summary>
+    <div id="debugLog"></div>
+    <div class="debug-controls">
+      <button id="clearLogBtn">Log leeren</button>
+    </div>
+  </details>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------------
+  // Konstanten (FTMS - Fitness Machine Service)
+  // ---------------------------------------------------------------------
+  const FTMS_SERVICE = 'fitness_machine';          // 0x1826
+  const CHAR_INDOOR_BIKE_DATA = 0x2AD2;            // Notify
+  const CHAR_CONTROL_POINT = 0x2AD9;               // Write + Indicate
+  const CHAR_STATUS = 0x2ADA;                      // Notify (optional)
+
+  const OPCODE_REQUEST_CONTROL = 0x00;
+  const OPCODE_START_RESUME = 0x07;
+  const OPCODE_STOP_PAUSE = 0x08;
+  const OPCODE_SET_TARGET_POWER = 0x05;
+  const RESPONSE_CODE = 0x80;
+  const RESULT_SUCCESS = 0x01;
+
+  const TARGET_MIN = 0;
+  const TARGET_MAX = 600;
+  const TARGET_STEP_SMALL = 5;
+  const TARGET_STEP_LARGE = 10;
+  const SET_POWER_DEBOUNCE_MS = 300;
+  const CONTROL_POINT_TIMEOUT_MS = 5000;
+
+  // ---------------------------------------------------------------------
+  // DOM-Referenzen
+  // ---------------------------------------------------------------------
+  const el = {
+    noBluetoothWarning: document.getElementById('noBluetoothWarning'),
+    connectBtn: document.getElementById('connectBtn'),
+    reconnectBtn: document.getElementById('reconnectBtn'),
+    statusDot: document.getElementById('statusDot'),
+    statusText: document.getElementById('statusText'),
+    powerValue: document.getElementById('powerValue'),
+    cadenceValue: document.getElementById('cadenceValue'),
+    speedValue: document.getElementById('speedValue'),
+    targetValue: document.getElementById('targetValue'),
+    minus10: document.getElementById('minus10'),
+    minus5: document.getElementById('minus5'),
+    plus5: document.getElementById('plus5'),
+    plus10: document.getElementById('plus10'),
+    setBtn: document.getElementById('setBtn'),
+    stopBtn: document.getElementById('stopBtn'),
+    debugLog: document.getElementById('debugLog'),
+    clearLogBtn: document.getElementById('clearLogBtn'),
+  };
+
+  // ---------------------------------------------------------------------
+  // Zustand
+  // ---------------------------------------------------------------------
+  let device = null;
+  let server = null;
+  let controlPointChar = null;
+  let wakeLock = null;
+  let targetPower = 100;
+  let debounceTimer = null;
+
+  // Control-Point-Befehle werden strikt nacheinander abgearbeitet:
+  // erst wenn die Indication-Antwort auf den vorherigen Befehl da ist
+  // (oder ein Timeout greift), wird der nächste Befehl geschrieben.
+  // Ohne diese Serialisierung wirft Web Bluetooth bei schnell
+  // aufeinanderfolgenden Writes "GATT operation already in progress".
+  let commandQueue = [];
+  let queueBusy = false;
+  let pendingIndication = null; // { resolve, reject, timeoutId }
+
+  // ---------------------------------------------------------------------
+  // Debug-Log
+  // ---------------------------------------------------------------------
+  function logDebug(tag, message) {
+    const time = new Date().toLocaleTimeString('de-DE', { hour12: false });
+    const line = document.createElement('div');
+    line.textContent = `[${time}] ${tag}: ${message}`;
+    el.debugLog.appendChild(line);
+    while (el.debugLog.childNodes.length > 300) {
+      el.debugLog.removeChild(el.debugLog.firstChild);
+    }
+    el.debugLog.scrollTop = el.debugLog.scrollHeight;
+  }
+
+  el.clearLogBtn.addEventListener('click', () => {
+    el.debugLog.innerHTML = '';
+  });
+
+  function bytesToHex(buffer) {
+    return Array.from(new Uint8Array(buffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join(' ');
+  }
+
+  // ---------------------------------------------------------------------
+  // Status-Anzeige
+  // ---------------------------------------------------------------------
+  function setStatus(state, detail) {
+    el.statusDot.className = 'status-dot';
+    switch (state) {
+      case 'connected':
+        el.statusDot.classList.add('connected');
+        el.statusText.textContent = `Verbunden mit ${detail || 'Trainer'}`;
+        el.reconnectBtn.style.display = 'none';
+        el.connectBtn.style.display = 'none';
+        break;
+      case 'connecting':
+        el.statusDot.classList.add('connecting');
+        el.statusText.textContent = 'Verbinde...';
+        break;
+      case 'disconnected':
+        el.statusText.textContent = 'Getrennt';
+        el.connectBtn.style.display = 'none';
+        el.reconnectBtn.style.display = 'inline-block';
+        break;
+      case 'error':
+        el.statusText.textContent = `Fehler: ${detail}`;
+        el.connectBtn.style.display = 'inline-block';
+        el.connectBtn.disabled = false;
+        break;
+      default:
+        el.statusText.textContent = 'Nicht verbunden';
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Wake Lock
+  // ---------------------------------------------------------------------
+  async function requestWakeLock() {
+    if (!('wakeLock' in navigator)) {
+      logDebug('INFO', 'Wake Lock API wird nicht unterstützt');
+      return;
+    }
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      logDebug('INFO', 'Wake Lock aktiviert');
+      wakeLock.addEventListener('release', () => {
+        logDebug('INFO', 'Wake Lock freigegeben');
+      });
+    } catch (err) {
+      logDebug('ERR', 'Wake Lock konnte nicht angefordert werden: ' + err.message);
+    }
+  }
+
+  document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+      await requestWakeLock();
+    }
+  });
+
+  // ---------------------------------------------------------------------
+  // Indoor Bike Data parsen (little-endian)
+  // ---------------------------------------------------------------------
+  function parseIndoorBikeData(dataView) {
+    let offset = 0;
+    const flags = dataView.getUint16(offset, true);
+    offset += 2;
+
+    const result = {};
+
+    // Bit 0: invertierte Logik - Speed ist vorhanden, wenn das Bit NICHT gesetzt ist
+    if ((flags & 0x0001) === 0) {
+      result.instantaneousSpeed = dataView.getUint16(offset, true) * 0.01; // km/h
+      offset += 2;
+    }
+    if (flags & 0x0002) { // Average Speed
+      offset += 2;
+    }
+    if (flags & 0x0004) { // Instantaneous Cadence (0.5 rpm Auflösung)
+      result.instantaneousCadence = dataView.getUint16(offset, true) * 0.5;
+      offset += 2;
+    }
+    if (flags & 0x0008) { // Average Cadence
+      offset += 2;
+    }
+    if (flags & 0x0010) { // Total Distance (uint24)
+      offset += 3;
+    }
+    if (flags & 0x0020) { // Resistance Level (sint16)
+      offset += 2;
+    }
+    if (flags & 0x0040) { // Instantaneous Power (sint16, Watt)
+      result.instantaneousPower = dataView.getInt16(offset, true);
+      offset += 2;
+    }
+    if (flags & 0x0080) { // Average Power (sint16)
+      offset += 2;
+    }
+    if (flags & 0x0100) { // Expended Energy: total(uint16) + per hour(uint16) + per minute(uint8)
+      offset += 5;
+    }
+    if (flags & 0x0200) { // Heart Rate (uint8)
+      offset += 1;
+    }
+    if (flags & 0x0400) { // Metabolic Equivalent (uint8)
+      offset += 1;
+    }
+    if (flags & 0x0800) { // Elapsed Time (uint16)
+      offset += 2;
+    }
+    if (flags & 0x1000) { // Remaining Time (uint16)
+      offset += 2;
+    }
+
+    return result;
+  }
+
+  function onBikeDataChanged(event) {
+    const dataView = event.target.value;
+    logDebug('RX Bike Data', bytesToHex(dataView.buffer));
+
+    const data = parseIndoorBikeData(dataView);
+
+    if (data.instantaneousPower !== undefined) {
+      el.powerValue.textContent = Math.round(data.instantaneousPower);
+    }
+    if (data.instantaneousCadence !== undefined) {
+      el.cadenceValue.textContent = Math.round(data.instantaneousCadence);
+    }
+    if (data.instantaneousSpeed !== undefined) {
+      el.speedValue.textContent = data.instantaneousSpeed.toFixed(1);
+    }
+  }
+
+  function onStatusChanged(event) {
+    logDebug('RX Status', bytesToHex(event.target.value.buffer));
+  }
+
+  // ---------------------------------------------------------------------
+  // Control Point: serialisierte Befehls-Queue
+  // ---------------------------------------------------------------------
+  function onControlPointChanged(event) {
+    const dataView = event.target.value;
+    const hex = bytesToHex(dataView.buffer);
+
+    if (dataView.byteLength >= 3 && dataView.getUint8(0) === RESPONSE_CODE) {
+      const requestOpCode = dataView.getUint8(1);
+      const resultCode = dataView.getUint8(2);
+      const ok = resultCode === RESULT_SUCCESS;
+      logDebug(
+        'RX Control Point',
+        `Antwort auf OpCode 0x${requestOpCode.toString(16).padStart(2, '0')}, ` +
+          `Ergebnis 0x${resultCode.toString(16).padStart(2, '0')} ${ok ? '(Erfolg)' : '(Fehler)'} | Raw: ${hex}`
+      );
+      if (pendingIndication) {
+        clearTimeout(pendingIndication.timeoutId);
+        const { resolve, reject } = pendingIndication;
+        pendingIndication = null;
+        if (ok) {
+          resolve({ requestOpCode, resultCode });
+        } else {
+          reject(new Error(`Trainer meldet Fehlercode 0x${resultCode.toString(16)}`));
+        }
+      }
+    } else {
+      logDebug('RX Control Point', `Unerwartetes Format | Raw: ${hex}`);
+    }
+  }
+
+  function waitForIndication(timeoutMs) {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        pendingIndication = null;
+        reject(new Error('Zeitüberschreitung: keine Antwort vom Trainer'));
+      }, timeoutMs);
+      pendingIndication = { resolve, reject, timeoutId };
+    });
+  }
+
+  function sendControlCommand(bytes, label) {
+    return new Promise((resolve, reject) => {
+      commandQueue.push({ bytes, label, resolve, reject });
+      processCommandQueue();
+    });
+  }
+
+  async function processCommandQueue() {
+    if (queueBusy || commandQueue.length === 0) return;
+    queueBusy = true;
+    const { bytes, label, resolve, reject } = commandQueue.shift();
+    try {
+      if (!controlPointChar) {
+        throw new Error('Nicht verbunden');
+      }
+      logDebug('TX Control Point', `${label} | Raw: ${bytesToHex(bytes.buffer)}`);
+      await controlPointChar.writeValueWithResponse(bytes);
+      const response = await waitForIndication(CONTROL_POINT_TIMEOUT_MS);
+      resolve(response);
+    } catch (err) {
+      logDebug('ERR', `${label} fehlgeschlagen: ${err.message}`);
+      reject(err);
+    } finally {
+      queueBusy = false;
+      processCommandQueue();
+    }
+  }
+
+  function requestControl() {
+    return sendControlCommand(new Uint8Array([OPCODE_REQUEST_CONTROL]), 'Request Control');
+  }
+
+  function startResume() {
+    return sendControlCommand(new Uint8Array([OPCODE_START_RESUME]), 'Start/Resume');
+  }
+
+  function stopPause() {
+    return sendControlCommand(new Uint8Array([OPCODE_STOP_PAUSE, 0x01]), 'Stop/Pause');
+  }
+
+  function setTargetPowerOnTrainer(watts) {
+    const buffer = new ArrayBuffer(3);
+    const view = new DataView(buffer);
+    view.setUint8(0, OPCODE_SET_TARGET_POWER);
+    view.setInt16(1, watts, true);
+    return sendControlCommand(new Uint8Array(buffer), `Set Target Power (${watts} W)`);
+  }
+
+  // ---------------------------------------------------------------------
+  // Verbindungsaufbau
+  // ---------------------------------------------------------------------
+  async function connectAndSetup(bleDevice) {
+    setStatus('connecting');
+    server = await bleDevice.gatt.connect();
+    logDebug('INFO', 'GATT-Server verbunden');
+
+    const service = await server.getPrimaryService(FTMS_SERVICE);
+    logDebug('INFO', 'Fitness Machine Service gefunden');
+
+    const bikeDataChar = await service.getCharacteristic(CHAR_INDOOR_BIKE_DATA);
+    await bikeDataChar.startNotifications();
+    bikeDataChar.addEventListener('characteristicvaluechanged', onBikeDataChanged);
+    logDebug('INFO', 'Indoor Bike Data Notifications aktiv');
+
+    controlPointChar = await service.getCharacteristic(CHAR_CONTROL_POINT);
+    await controlPointChar.startNotifications();
+    controlPointChar.addEventListener('characteristicvaluechanged', onControlPointChanged);
+    logDebug('INFO', 'Control Point Indications aktiv');
+
+    try {
+      const statusChar = await service.getCharacteristic(CHAR_STATUS);
+      await statusChar.startNotifications();
+      statusChar.addEventListener('characteristicvaluechanged', onStatusChanged);
+      logDebug('INFO', 'Fitness Machine Status Notifications aktiv');
+    } catch (err) {
+      logDebug('INFO', 'Fitness Machine Status nicht verfügbar (optional)');
+    }
+
+    setStatus('connected', bleDevice.name);
+    requestWakeLock();
+
+    // Steuerungshoheit anfordern, dann Training starten (laut FTMS-Ablauf
+    // muss jeder Befehl erst mit Erfolg quittiert werden, bevor der nächste folgt)
+    await requestControl();
+    await startResume();
+  }
+
+  function handleDisconnected() {
+    logDebug('INFO', 'Verbindung zum Trainer getrennt');
+    controlPointChar = null;
+    pendingIndication = null;
+    commandQueue = [];
+    queueBusy = false;
+    setStatus('disconnected');
+  }
+
+  async function onConnectClick() {
+    try {
+      el.connectBtn.disabled = true;
+      device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [FTMS_SERVICE] }],
+      });
+      device.addEventListener('gattserverdisconnected', handleDisconnected);
+      await connectAndSetup(device);
+    } catch (err) {
+      logDebug('ERR', 'Verbindung fehlgeschlagen: ' + err.message);
+      setStatus('error', err.message);
+    } finally {
+      el.connectBtn.disabled = false;
+    }
+  }
+
+  async function onReconnectClick() {
+    if (!device) return;
+    try {
+      el.reconnectBtn.disabled = true;
+      await connectAndSetup(device);
+    } catch (err) {
+      logDebug('ERR', 'Erneute Verbindung fehlgeschlagen: ' + err.message);
+      setStatus('error', err.message);
+    } finally {
+      el.reconnectBtn.disabled = false;
+    }
+  }
+
+  el.connectBtn.addEventListener('click', onConnectClick);
+  el.reconnectBtn.addEventListener('click', onReconnectClick);
+
+  // ---------------------------------------------------------------------
+  // ERG-Steuerung UI
+  // ---------------------------------------------------------------------
+  function clampTarget(value) {
+    return Math.min(TARGET_MAX, Math.max(TARGET_MIN, value));
+  }
+
+  function renderTarget() {
+    el.targetValue.textContent = targetPower;
+  }
+
+  function scheduleTargetSend() {
+    // Debounce: bei mehrfachem schnellem Tippen auf +/- wird nur einmal
+    // gesendet, 300ms nach dem letzten Tastendruck. Das vermeidet unnötige
+    // BLE-Schreibvorgänge und Warteschlangen-Staus. Der "Setzen"-Button
+    // sendet zusätzlich sofort, falls der Nutzer nicht warten will.
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      sendCurrentTarget();
+    }, SET_POWER_DEBOUNCE_MS);
+  }
+
+  function sendCurrentTarget() {
+    if (!controlPointChar) {
+      logDebug('ERR', 'Zielleistung kann nicht gesendet werden: nicht verbunden');
+      return;
+    }
+    setTargetPowerOnTrainer(targetPower).catch(() => {});
+  }
+
+  function adjustTarget(delta) {
+    targetPower = clampTarget(targetPower + delta);
+    renderTarget();
+    scheduleTargetSend();
+  }
+
+  el.minus10.addEventListener('click', () => adjustTarget(-TARGET_STEP_LARGE));
+  el.minus5.addEventListener('click', () => adjustTarget(-TARGET_STEP_SMALL));
+  el.plus5.addEventListener('click', () => adjustTarget(TARGET_STEP_SMALL));
+  el.plus10.addEventListener('click', () => adjustTarget(TARGET_STEP_LARGE));
+
+  el.setBtn.addEventListener('click', () => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+    sendCurrentTarget();
+  });
+
+  el.stopBtn.addEventListener('click', () => {
+    stopPause().catch(() => {});
+  });
+
+  // ---------------------------------------------------------------------
+  // Initialisierung
+  // ---------------------------------------------------------------------
+  renderTarget();
+
+  if (!navigator.bluetooth) {
+    el.noBluetoothWarning.style.display = 'block';
+    el.connectBtn.disabled = true;
+    el.connectBtn.textContent = 'Bluetooth nicht verfügbar';
+    logDebug('ERR', 'navigator.bluetooth ist nicht vorhanden - bitte Bluefy verwenden');
+  } else {
+    logDebug('INFO', 'Bereit. Bitte "Mit Trainer verbinden" antippen.');
+  }
+})();
+</script>
+</body>
+</html>
