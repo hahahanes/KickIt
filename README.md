@@ -21,7 +21,8 @@ Web Bluetooth benötigt einen sicheren Kontext (HTTPS). GitHub Pages liefert aut
 5. Auf **„Mit Trainer verbinden“** tippen und in der erscheinenden Geräteliste den Kickr auswählen.
 6. Nach erfolgreicher Verbindung erscheinen Live-Werte für Leistung, Kadenz und Geschwindigkeit, sobald getreten wird.
 7. Zielleistung über die Buttons `-10 / -5 / +5 / +10` anpassen oder direkt mit **„Setzen“** senden. **„Stop“** pausiert den ERG-Modus.
-8. Das Debug-Log am unteren Rand (aufklappbar) zeigt alle gesendeten/empfangenen Rohdaten (Hex) sowie Control-Point-Antworten – hilfreich bei Verbindungsproblemen.
+8. Im Bereich **„Workout“** die eigene FTP eintragen und eines der drei vorbereiteten Workouts (LIT, MIT, HIT) auswählen und starten. Während des Workouts zeigt ein Diagramm das gesamte Leistungsprofil inkl. Fortschrittslinie, dazu Zielwatt, %FTP und verbleibende Zeit. Die Zielleistung wird automatisch passend zum Profil an den Trainer gesendet; „Pause“ hält nur den Timer an, „Abbrechen“ beendet das Workout und stoppt den ERG-Modus.
+9. Das Debug-Log am unteren Rand (aufklappbar) zeigt alle gesendeten/empfangenen Rohdaten (Hex) sowie Control-Point-Antworten – hilfreich bei Verbindungsproblemen.
 
 ## Dinge, die sich nur am echten Trainer prüfen lassen
 

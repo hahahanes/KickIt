@@ -238,6 +238,177 @@
     color: #ffd6d6;
   }
 
+  /* --- Workout --- */
+  .workout-panel {
+    background: var(--panel);
+    border: 2px solid var(--panel-border);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .workout-panel h2 {
+    margin: 0 0 14px 0;
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .ftp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .ftp-row label {
+    font-size: 1.05rem;
+  }
+  .ftp-row input {
+    font-family: inherit;
+    font-size: 1.3rem;
+    font-weight: 700;
+    width: 100px;
+    text-align: center;
+    padding: 10px 6px;
+    border-radius: 10px;
+    border: 2px solid var(--panel-border);
+    background: var(--bg);
+    color: var(--text);
+  }
+  .workout-select {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .workout-card {
+    text-align: left;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 100px;
+  }
+  .workout-card-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+  .workout-card-sub {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+  .workout-card-desc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.3;
+  }
+  .workout-card-target {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .workout-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .workout-start-btn {
+    width: 100%;
+  }
+  .workout-running-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .workout-running-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .workout-running-time {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .workout-chart {
+    width: 100%;
+    height: 180px;
+    display: block;
+    background: var(--bg);
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+  }
+  .workout-segment-label {
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+  .workout-target-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+    margin-bottom: 14px;
+  }
+  .workout-target-row > div {
+    background: var(--bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .workout-target-label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .workout-target-value {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .workout-intensity-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+  }
+  .workout-intensity-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .workout-intensity-controls button {
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 10px 14px;
+  }
+  .workout-intensity-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    min-width: 3.5em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .workout-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .workout-controls button {
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 16px 0;
+  }
+
   /* --- Debug Log --- */
   details.debug {
     background: var(--panel);
@@ -278,6 +449,7 @@
   @media (max-width: 600px) {
     .readout .value { font-size: 2.6rem; }
     .target-display .value { font-size: 3.6rem; }
+    .workout-select { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -314,6 +486,73 @@
     </div>
   </div>
 
+  <div class="workout-panel">
+    <h2>Workout</h2>
+    <div class="ftp-row">
+      <label for="ftpInput">FTP (W)</label>
+      <input type="number" id="ftpInput" min="50" max="600" step="1" value="200">
+    </div>
+
+    <div class="workout-select" id="workoutSelect">
+      <button type="button" class="workout-card" data-workout="lit">
+        <div class="workout-card-name">LIT</div>
+        <div class="workout-card-sub">Low Intensity · 60 Min</div>
+        <div class="workout-card-desc">Lockere, lange Grundlageneinheit in Zone 2.</div>
+        <div class="workout-card-target" data-target="lit"></div>
+      </button>
+      <button type="button" class="workout-card" data-workout="mit">
+        <div class="workout-card-name">MIT</div>
+        <div class="workout-card-sub">Moderate Intensity · 50 Min</div>
+        <div class="workout-card-desc">4× 6 Min Sweetspot mit 3 Min Erholung.</div>
+        <div class="workout-card-target" data-target="mit"></div>
+      </button>
+      <button type="button" class="workout-card" data-workout="hit">
+        <div class="workout-card-name">HIT</div>
+        <div class="workout-card-sub">High Intensity · 48 Min</div>
+        <div class="workout-card-desc">6× 3 Min VO2max-Intervalle mit Erholung.</div>
+        <div class="workout-card-target" data-target="hit"></div>
+      </button>
+    </div>
+
+    <button id="startWorkoutBtn" class="btn-primary workout-start-btn" disabled>Workout starten</button>
+
+    <div class="workout-running" id="workoutRunning" style="display:none;">
+      <div class="workout-running-header">
+        <div class="workout-running-name" id="workoutRunningName"></div>
+        <div class="workout-running-time"><span id="workoutElapsedTime">00:00</span> / <span id="workoutTotalTime">00:00</span></div>
+      </div>
+      <div class="target-sync-note" id="workoutConnectionNote"></div>
+      <canvas id="workoutChart" class="workout-chart"></canvas>
+      <div class="workout-segment-label" id="workoutSegmentLabel"></div>
+      <div class="workout-target-row">
+        <div>
+          <span class="workout-target-label">Ziel</span>
+          <span class="workout-target-value" id="workoutTargetValue">-- W</span>
+        </div>
+        <div>
+          <span class="workout-target-label">% FTP</span>
+          <span class="workout-target-value" id="workoutTargetPct">--%</span>
+        </div>
+        <div>
+          <span class="workout-target-label">Verbleibend</span>
+          <span class="workout-target-value" id="workoutRemaining">--:--</span>
+        </div>
+      </div>
+      <div class="workout-intensity-row">
+        <span class="workout-target-label">Intensität</span>
+        <div class="workout-intensity-controls">
+          <button id="intensityMinusBtn">-5%</button>
+          <span class="workout-intensity-value" id="workoutIntensityValue">100%</span>
+          <button id="intensityPlusBtn">+5%</button>
+        </div>
+      </div>
+      <div class="workout-controls">
+        <button id="pauseWorkoutBtn">Pause</button>
+        <button id="cancelWorkoutBtn" class="btn-stop">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
   <div class="readouts">
     <div class="readout">
       <div class="label">Leistung</div>
@@ -332,7 +571,7 @@
     </div>
   </div>
 
-  <div class="erg-panel">
+  <div class="erg-panel" id="ergPanel">
     <h2>ERG-Steuerung · Zielleistung</h2>
     <div class="target-display">
       <span class="value" id="targetValue">100</span>
@@ -402,6 +641,25 @@
     statusControl: document.getElementById('statusControl'),
     statusMode: document.getElementById('statusMode'),
     statusTargetTrainer: document.getElementById('statusTargetTrainer'),
+    ergPanel: document.getElementById('ergPanel'),
+    ftpInput: document.getElementById('ftpInput'),
+    workoutSelect: document.getElementById('workoutSelect'),
+    startWorkoutBtn: document.getElementById('startWorkoutBtn'),
+    workoutRunning: document.getElementById('workoutRunning'),
+    workoutRunningName: document.getElementById('workoutRunningName'),
+    workoutElapsedTime: document.getElementById('workoutElapsedTime'),
+    workoutTotalTime: document.getElementById('workoutTotalTime'),
+    workoutChart: document.getElementById('workoutChart'),
+    workoutSegmentLabel: document.getElementById('workoutSegmentLabel'),
+    workoutTargetValue: document.getElementById('workoutTargetValue'),
+    workoutTargetPct: document.getElementById('workoutTargetPct'),
+    workoutRemaining: document.getElementById('workoutRemaining'),
+    workoutConnectionNote: document.getElementById('workoutConnectionNote'),
+    workoutIntensityValue: document.getElementById('workoutIntensityValue'),
+    intensityMinusBtn: document.getElementById('intensityMinusBtn'),
+    intensityPlusBtn: document.getElementById('intensityPlusBtn'),
+    pauseWorkoutBtn: document.getElementById('pauseWorkoutBtn'),
+    cancelWorkoutBtn: document.getElementById('cancelWorkoutBtn'),
     minus10: document.getElementById('minus10'),
     minus5: document.getElementById('minus5'),
     plus5: document.getElementById('plus5'),
@@ -439,6 +697,24 @@
   let commandQueue = [];
   let queueBusy = false;
   let pendingIndication = null; // { resolve, reject, timeoutId }
+
+  // ---------------------------------------------------------------------
+  // Workout-Zustand
+  // ---------------------------------------------------------------------
+  let ftp = 200;
+  let selectedWorkoutId = null;
+  let activeWorkout = null;        // Workout-Objekt während der Ausführung
+  let activeWorkoutFtp = 0;        // FTP, mit der das laufende Workout berechnet wird
+  let workoutStartTimestamp = null;
+  let workoutElapsedBeforePause = 0;
+  let workoutPaused = false;
+  let workoutTimerHandle = null;
+  let workoutLastSentWatts = null;
+  let workoutIntensity = 1.0; // Manueller Multiplikator, während des Workouts per +/- anpassbar
+
+  const INTENSITY_STEP = 0.05;
+  const INTENSITY_MIN = 0.5;
+  const INTENSITY_MAX = 1.5;
 
   // ---------------------------------------------------------------------
   // Debug-Log
@@ -556,6 +832,384 @@
     lastCommandFailed = false;
     updateTrainerStatusUI();
   }
+
+  // ---------------------------------------------------------------------
+  // Workout-Definitionen
+  // ---------------------------------------------------------------------
+  // Jedes Segment hat eine Dauer (Sekunden) und einen Leistungsbereich als
+  // Anteil der FTP (fromPct -> toPct). Bei gleichem from/to ist es ein
+  // konstantes Segment, sonst eine lineare Rampe.
+  const WORKOUTS = {
+    lit: {
+      id: 'lit',
+      name: 'LIT – Grundlage',
+      segments: [
+        { label: 'Aufwärmen', duration: 300, fromPct: 0.50, toPct: 0.65 },
+        { label: 'Grundlage', duration: 3000, fromPct: 0.65, toPct: 0.65 },
+        { label: 'Abwärmen', duration: 300, fromPct: 0.65, toPct: 0.50 },
+      ],
+    },
+    mit: {
+      id: 'mit',
+      name: 'MIT – Sweetspot-Intervalle',
+      segments: [
+        { label: 'Aufwärmen', duration: 600, fromPct: 0.50, toPct: 0.70 },
+        { label: 'Intervall 1/4', duration: 360, fromPct: 0.88, toPct: 0.88 },
+        { label: 'Erholung', duration: 180, fromPct: 0.55, toPct: 0.55 },
+        { label: 'Intervall 2/4', duration: 360, fromPct: 0.88, toPct: 0.88 },
+        { label: 'Erholung', duration: 180, fromPct: 0.55, toPct: 0.55 },
+        { label: 'Intervall 3/4', duration: 360, fromPct: 0.88, toPct: 0.88 },
+        { label: 'Erholung', duration: 180, fromPct: 0.55, toPct: 0.55 },
+        { label: 'Intervall 4/4', duration: 360, fromPct: 0.88, toPct: 0.88 },
+        { label: 'Abwärmen', duration: 420, fromPct: 0.70, toPct: 0.50 },
+      ],
+    },
+    hit: {
+      id: 'hit',
+      name: 'HIT – VO2max-Intervalle',
+      segments: [
+        { label: 'Aufwärmen', duration: 600, fromPct: 0.50, toPct: 0.70 },
+        { label: 'Intervall 1/6', duration: 180, fromPct: 1.10, toPct: 1.10 },
+        { label: 'Erholung', duration: 180, fromPct: 0.50, toPct: 0.50 },
+        { label: 'Intervall 2/6', duration: 180, fromPct: 1.10, toPct: 1.10 },
+        { label: 'Erholung', duration: 180, fromPct: 0.50, toPct: 0.50 },
+        { label: 'Intervall 3/6', duration: 180, fromPct: 1.10, toPct: 1.10 },
+        { label: 'Erholung', duration: 180, fromPct: 0.50, toPct: 0.50 },
+        { label: 'Intervall 4/6', duration: 180, fromPct: 1.10, toPct: 1.10 },
+        { label: 'Erholung', duration: 180, fromPct: 0.50, toPct: 0.50 },
+        { label: 'Intervall 5/6', duration: 180, fromPct: 1.10, toPct: 1.10 },
+        { label: 'Erholung', duration: 180, fromPct: 0.50, toPct: 0.50 },
+        { label: 'Intervall 6/6', duration: 180, fromPct: 1.10, toPct: 1.10 },
+        { label: 'Abwärmen', duration: 300, fromPct: 0.70, toPct: 0.50 },
+      ],
+    },
+  };
+
+  function workoutTotalDuration(workout) {
+    return workout.segments.reduce((sum, seg) => sum + seg.duration, 0);
+  }
+
+  function workoutAveragePct(workout) {
+    const total = workoutTotalDuration(workout);
+    const weighted = workout.segments.reduce(
+      (sum, seg) => sum + ((seg.fromPct + seg.toPct) / 2) * seg.duration,
+      0
+    );
+    return weighted / total;
+  }
+
+  // Liefert { segment, index, localT, fractionOfFtp } für den Zeitpunkt t
+  // (Sekunden seit Workout-Start).
+  function workoutStateAt(workout, t) {
+    let elapsed = 0;
+    for (let i = 0; i < workout.segments.length; i++) {
+      const seg = workout.segments[i];
+      if (t <= elapsed + seg.duration || i === workout.segments.length - 1) {
+        const localT = Math.max(0, Math.min(seg.duration, t - elapsed));
+        const ratio = seg.duration === 0 ? 1 : localT / seg.duration;
+        const fractionOfFtp = seg.fromPct + (seg.toPct - seg.fromPct) * ratio;
+        return { segment: seg, index: i, localT, fractionOfFtp };
+      }
+      elapsed += seg.duration;
+    }
+    const last = workout.segments[workout.segments.length - 1];
+    return { segment: last, index: workout.segments.length - 1, localT: last.duration, fractionOfFtp: last.toPct };
+  }
+
+  function wattsAt(workout, t, ftpValue, intensity) {
+    return Math.round(workoutStateAt(workout, t).fractionOfFtp * ftpValue * (intensity || 1));
+  }
+
+  function zoneColor(pct) {
+    if (pct < 0.55) return '#5b6472';
+    if (pct < 0.76) return '#3ea6ff';
+    if (pct < 0.91) return '#3ecf6e';
+    if (pct < 1.06) return '#ffb03e';
+    if (pct < 1.21) return '#ff8a3e';
+    return '#ff5c5c';
+  }
+
+  function formatClock(totalSeconds) {
+    const s = Math.max(0, Math.round(totalSeconds));
+    const mm = Math.floor(s / 60).toString().padStart(2, '0');
+    const ss = (s % 60).toString().padStart(2, '0');
+    return `${mm}:${ss}`;
+  }
+
+  // ---------------------------------------------------------------------
+  // Workout-Auswahl-UI
+  // ---------------------------------------------------------------------
+  function renderWorkoutCardTargets() {
+    Object.keys(WORKOUTS).forEach((id) => {
+      const workout = WORKOUTS[id];
+      const target = document.querySelector(`.workout-card-target[data-target="${id}"]`);
+      if (!target) return;
+      const avgWatts = Math.round(workoutAveragePct(workout) * ftp);
+      const minutes = Math.round(workoutTotalDuration(workout) / 60);
+      target.textContent = `Ø ${avgWatts} W · ${minutes} Min`;
+    });
+  }
+
+  function updateWorkoutAvailability() {
+    const ready = !!selectedWorkoutId && ftp > 0 && !activeWorkout;
+    el.startWorkoutBtn.disabled = !ready;
+  }
+
+  el.ftpInput.addEventListener('change', () => {
+    const value = parseInt(el.ftpInput.value, 10);
+    ftp = Number.isFinite(value) && value > 0 ? value : ftp;
+    el.ftpInput.value = ftp;
+    try { localStorage.setItem('kickrFtp', String(ftp)); } catch (err) { /* ignore */ }
+    renderWorkoutCardTargets();
+    updateWorkoutAvailability();
+  });
+
+  el.workoutSelect.addEventListener('click', (event) => {
+    const card = event.target.closest('.workout-card');
+    if (!card) return;
+    selectedWorkoutId = card.dataset.workout;
+    el.workoutSelect.querySelectorAll('.workout-card').forEach((c) => {
+      c.classList.toggle('selected', c === card);
+    });
+    updateWorkoutAvailability();
+  });
+
+  // ---------------------------------------------------------------------
+  // Workout-Diagramm
+  // ---------------------------------------------------------------------
+  function drawWorkoutChart(workout, ftpValue, elapsedSec, intensity) {
+    const canvas = el.workoutChart;
+    const cssWidth = canvas.clientWidth || canvas.parentElement.clientWidth;
+    const cssHeight = canvas.clientHeight || 180;
+    const dpr = window.devicePixelRatio || 1;
+    if (canvas.width !== Math.round(cssWidth * dpr) || canvas.height !== Math.round(cssHeight * dpr)) {
+      canvas.width = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(cssHeight * dpr);
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    const total = workoutTotalDuration(workout);
+    const maxPct = workout.segments.reduce((m, seg) => Math.max(m, seg.fromPct, seg.toPct), 0.1);
+    const maxWatts = maxPct * ftpValue * intensity * 1.15;
+    const xScale = cssWidth / total;
+    const yScale = cssHeight / maxWatts;
+
+    let elapsed = 0;
+    workout.segments.forEach((seg) => {
+      const x0 = elapsed * xScale;
+      const x1 = (elapsed + seg.duration) * xScale;
+      const y0 = cssHeight - (seg.fromPct * ftpValue * intensity) * yScale;
+      const y1 = cssHeight - (seg.toPct * ftpValue * intensity) * yScale;
+      const avgPct = (seg.fromPct + seg.toPct) / 2 * intensity;
+
+      ctx.beginPath();
+      ctx.moveTo(x0, cssHeight);
+      ctx.lineTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.lineTo(x1, cssHeight);
+      ctx.closePath();
+      ctx.fillStyle = zoneColor(avgPct);
+      ctx.globalAlpha = elapsed + seg.duration <= elapsedSec ? 0.35 : 0.75;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      elapsed += seg.duration;
+    });
+
+    // Fortschrittslinie ("jetzt")
+    const nowX = Math.min(cssWidth, elapsedSec * xScale);
+    ctx.beginPath();
+    ctx.moveTo(nowX, 0);
+    ctx.lineTo(nowX, cssHeight);
+    ctx.strokeStyle = '#f2f4f7';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // ---------------------------------------------------------------------
+  // Workout-Ausführung
+  // ---------------------------------------------------------------------
+  function showWorkoutSelectionUI() {
+    el.workoutSelect.style.display = '';
+    el.startWorkoutBtn.style.display = '';
+    el.workoutRunning.style.display = 'none';
+    el.ergPanel.style.display = '';
+  }
+
+  function showWorkoutRunningUI(workout) {
+    el.workoutSelect.style.display = 'none';
+    el.startWorkoutBtn.style.display = 'none';
+    el.workoutRunning.style.display = '';
+    el.ergPanel.style.display = 'none';
+    el.workoutRunningName.textContent = workout.name;
+    el.workoutTotalTime.textContent = formatClock(workoutTotalDuration(workout));
+  }
+
+  function workoutElapsedSeconds() {
+    if (!activeWorkout) return 0;
+    if (workoutPaused) return workoutElapsedBeforePause;
+    return workoutElapsedBeforePause + (Date.now() - workoutStartTimestamp) / 1000;
+  }
+
+  function updateWorkoutRunningUI() {
+    if (!activeWorkout) return;
+    const elapsed = Math.min(workoutTotalDuration(activeWorkout), workoutElapsedSeconds());
+    const total = workoutTotalDuration(activeWorkout);
+    const state = workoutStateAt(activeWorkout, elapsed);
+    const watts = Math.round(state.fractionOfFtp * activeWorkoutFtp * workoutIntensity);
+
+    el.workoutElapsedTime.textContent = formatClock(elapsed);
+    el.workoutRemaining.textContent = formatClock(total - elapsed);
+    el.workoutTargetValue.textContent = `${watts} W`;
+    el.workoutTargetPct.textContent = `${Math.round(state.fractionOfFtp * workoutIntensity * 100)}%`;
+    el.workoutSegmentLabel.textContent = state.segment.label || '';
+    el.workoutIntensityValue.textContent = `${Math.round(workoutIntensity * 100)}%`;
+    el.pauseWorkoutBtn.textContent = workoutPaused ? 'Fortsetzen' : 'Pause';
+
+    if (!controlPointChar) {
+      el.workoutConnectionNote.textContent = 'Nicht mit Trainer verbunden – Zielwerte werden nur angezeigt';
+      el.workoutConnectionNote.className = 'target-sync-note warn';
+    } else {
+      el.workoutConnectionNote.textContent = '';
+      el.workoutConnectionNote.className = 'target-sync-note';
+    }
+
+    drawWorkoutChart(activeWorkout, activeWorkoutFtp, elapsed, workoutIntensity);
+  }
+
+  function sendWorkoutTarget(watts) {
+    targetPower = clampTarget(watts);
+    if (!controlPointChar) {
+      // Nicht verbunden: nur lokal anzeigen. workoutLastSentWatts bleibt
+      // unverändert, damit nach einer späteren Verbindung sofort gesendet wird.
+      updateTrainerStatusUI();
+      return;
+    }
+    workoutLastSentWatts = watts;
+    setTargetPowerOnTrainer(targetPower)
+      .then(() => {
+        confirmedTargetPower = targetPower;
+        lastCommandFailed = false;
+      })
+      .catch(() => {
+        lastCommandFailed = true;
+      })
+      .finally(updateTrainerStatusUI);
+  }
+
+  function workoutTick() {
+    if (!activeWorkout) return;
+    const elapsed = workoutElapsedSeconds();
+    const total = workoutTotalDuration(activeWorkout);
+
+    if (elapsed >= total) {
+      finishWorkout();
+      return;
+    }
+
+    if (!workoutPaused) {
+      const watts = wattsAt(activeWorkout, elapsed, activeWorkoutFtp, workoutIntensity);
+      if (workoutLastSentWatts === null || Math.abs(watts - workoutLastSentWatts) >= 5) {
+        sendWorkoutTarget(watts);
+      }
+    }
+
+    updateWorkoutRunningUI();
+  }
+
+  function adjustWorkoutIntensity(delta) {
+    if (!activeWorkout) return;
+    const next = Math.round((workoutIntensity + delta) * 100) / 100;
+    workoutIntensity = Math.min(INTENSITY_MAX, Math.max(INTENSITY_MIN, next));
+    logDebug('INFO', `Workout-Intensität auf ${Math.round(workoutIntensity * 100)}% gesetzt`);
+
+    if (!workoutPaused) {
+      const watts = wattsAt(activeWorkout, workoutElapsedSeconds(), activeWorkoutFtp, workoutIntensity);
+      sendWorkoutTarget(watts);
+    }
+    updateWorkoutRunningUI();
+  }
+
+  function startWorkout(workoutId) {
+    const workout = WORKOUTS[workoutId];
+    if (!workout) return;
+
+    activeWorkout = workout;
+    activeWorkoutFtp = ftp;
+    workoutElapsedBeforePause = 0;
+    workoutStartTimestamp = Date.now();
+    workoutPaused = false;
+    workoutLastSentWatts = null;
+    workoutIntensity = 1.0;
+
+    showWorkoutRunningUI(workout);
+    updateWorkoutAvailability();
+    logDebug('INFO', `Workout "${workout.name}" gestartet (FTP ${ftp} W)`);
+    if (!controlPointChar) {
+      logDebug('INFO', 'Kein Trainer verbunden – Zielwerte werden nur angezeigt, sobald verbunden automatisch gesendet.');
+    }
+
+    if (workoutTimerHandle) clearInterval(workoutTimerHandle);
+    workoutTimerHandle = setInterval(workoutTick, 1000);
+    workoutTick();
+  }
+
+  function pauseOrResumeWorkout() {
+    if (!activeWorkout) return;
+    if (workoutPaused) {
+      workoutPaused = false;
+      workoutStartTimestamp = Date.now();
+      logDebug('INFO', 'Workout fortgesetzt');
+    } else {
+      workoutElapsedBeforePause = workoutElapsedSeconds();
+      workoutPaused = true;
+      logDebug('INFO', 'Workout pausiert');
+    }
+    updateWorkoutRunningUI();
+  }
+
+  function stopWorkout(sendStopCommand) {
+    if (workoutTimerHandle) {
+      clearInterval(workoutTimerHandle);
+      workoutTimerHandle = null;
+    }
+    const wasActive = !!activeWorkout;
+    activeWorkout = null;
+    workoutPaused = false;
+    showWorkoutSelectionUI();
+    updateWorkoutAvailability();
+    if (wasActive && sendStopCommand && controlPointChar) {
+      stopPause()
+        .then(() => {
+          ergActive = false;
+          updateTrainerStatusUI();
+        })
+        .catch(() => {});
+    }
+  }
+
+  function finishWorkout() {
+    logDebug('INFO', 'Workout beendet');
+    stopWorkout(true);
+  }
+
+  function cancelWorkout() {
+    logDebug('INFO', 'Workout abgebrochen');
+    stopWorkout(true);
+  }
+
+  el.startWorkoutBtn.addEventListener('click', () => {
+    if (selectedWorkoutId) startWorkout(selectedWorkoutId);
+  });
+  el.pauseWorkoutBtn.addEventListener('click', pauseOrResumeWorkout);
+  el.cancelWorkoutBtn.addEventListener('click', cancelWorkout);
+  el.intensityMinusBtn.addEventListener('click', () => adjustWorkoutIntensity(-INTENSITY_STEP));
+  el.intensityPlusBtn.addEventListener('click', () => adjustWorkoutIntensity(INTENSITY_STEP));
+  window.addEventListener('resize', () => {
+    if (activeWorkout) updateWorkoutRunningUI();
+  });
 
   // ---------------------------------------------------------------------
   // Wake Lock
@@ -782,6 +1436,7 @@
 
     setStatus('connected', bleDevice.name);
     requestWakeLock();
+    updateWorkoutAvailability();
 
     // Steuerungshoheit anfordern, dann Training starten (laut FTMS-Ablauf
     // muss jeder Befehl erst mit Erfolg quittiert werden, bevor der nächste folgt)
@@ -814,6 +1469,12 @@
     queueBusy = false;
     setStatus('disconnected');
     resetTrainerStatus();
+    if (activeWorkout) {
+      logDebug('INFO', 'Verbindung verloren – Workout läuft weiter, Zielwerte werden nur noch angezeigt');
+      workoutLastSentWatts = null; // sorgt für sofortiges Senden nach erneutem Verbinden
+      updateWorkoutRunningUI();
+    }
+    updateWorkoutAvailability();
   }
 
   async function onConnectClick() {
@@ -926,6 +1587,15 @@
   // Initialisierung
   // ---------------------------------------------------------------------
   renderTarget();
+
+  try {
+    const storedFtp = parseInt(localStorage.getItem('kickrFtp'), 10);
+    if (Number.isFinite(storedFtp) && storedFtp > 0) ftp = storedFtp;
+  } catch (err) { /* ignore */ }
+  el.ftpInput.value = ftp;
+  renderWorkoutCardTargets();
+  showWorkoutSelectionUI();
+  updateWorkoutAvailability();
 
   if (!navigator.bluetooth) {
     el.noBluetoothWarning.style.display = 'block';
